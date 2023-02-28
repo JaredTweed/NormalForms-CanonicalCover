@@ -133,8 +133,7 @@ function image_manipulator(Set, Data, numImages)
     % Initialize the "empty" panorama.
     panorama = zeros([height width 3], 'like', I);
     
-    blender = vision.AlphaBlender('Operation', 'Binary mask', ...
-        'MaskSource', 'Input port');  
+    blender = vision.AlphaBlender('Operation', 'Binary mask', 'MaskSource', 'Input port');  
     
     % Create a 2-D spatial reference object defining the size of the panorama.
     xLimits = [xMin xMax];
