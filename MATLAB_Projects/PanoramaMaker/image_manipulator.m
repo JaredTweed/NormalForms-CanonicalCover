@@ -86,8 +86,7 @@ function image_manipulator(Set, Data, numImages)
     
             try
                 % Estimate the transformation between I(n) and I(n-1).
-                tforms(n) = estgeotform2d(matchedRPoints, matchedRPointsPrev,...
-                    'projective', 'Confidence', 99.9999, 'MaxNumTrials', 5000,'MaxDistance',0.5);
+                tforms(n) = estgeotform2d(matchedRPoints, matchedRPointsPrev, 'projective', 'Confidence', 99.9999, 'MaxNumTrials', 5000,'MaxDistance',0.5);
         
                 % Allows code to continue if estgeotform returns an invertible matrix
                 if(rank(tforms(n).T) == size(tforms(n).T,2))
