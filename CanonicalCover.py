@@ -146,31 +146,46 @@ def all_canonical_cover(fds):
             print(cover)
             fds_list.append(cover)
             
-def isDependencyPreserved(fds, relation_list):
-    print('---\nPreserved Dependencies:')
-    unpreservedPrintList = []
+def is_dependency_preserved(fds, relation_list, printDiff=False):
+    print('---\nDependencies Preservation:')
+    relation_dep_set_list = []
+    for R in relation_list:
+        relation_dep_set = []
+        # Find the closure for each combination of elements in the sub-relation
+        for length in range(1, len(R) + 1):
+            for i in combinations(R, length):
+                attributes = "".join(sorted(i))
+
+                # Create the subrelation functional dependency set
+                rhs = ''.join(sorted((get_closure(attributes, fds) & set(R)) - set(attributes)))
+                if(rhs != ''): relation_dep_set.append((attributes, rhs))
+        relation_dep_set = call_canonical_cover(relation_dep_set)
+        relation_dep_set_list = relation_dep_set_list + relation_dep_set
+
+    # Check whether closure of fds == relation_dep_set_list
     isPreserved = True
-    for index, (X, Y) in enumerate(fds):
-        Z_prev = set()
-        Z = set(X)
-        while(Z != Z_prev):
-            Z_prev = Z
-            for R in relation_list:
-                R = set(R)
-                Z = (get_closure(Z & R, fds) & R) | Z
-        if(Y in Z):
-            # Dependency is preserved
-            print('Index '+str(index)+': '+X+' → '+Y)
-        else: 
-            isPreserved = False
-            unpreservedPrintList.append('Index '+str(index)+': '+X+' → '+Y)
-    if(isPreserved == False): 
-        print('Non-Preserved Dependencies:')
-        for dep in unpreservedPrintList:
-            print(dep)
-    else: print('All dependencies are preserved after\ndecomposition into '+str(relation_list)+'.')
+    relation_unequal_closure_list = []
+    for length in range(1, len(fds_to_items(fds)) + 1):
+        for i in combinations(fds_to_items(fds), length):
+            attributes = "".join(sorted(i))
+
+            fds_closure = get_closure(attributes, fds)
+            relation_closure = get_closure(attributes, relation_dep_set_list)
+            if(fds_closure != relation_closure):
+                if(isPreserved == True): 
+                    print('The sub-relations do not preserve all the dependencies.')
+                    if(printDiff == True): print('The unequal closures are shown below.\nOriginal Closure:')
+                    isPreserved = False
+                if(printDiff == True): 
+                    print('['+attributes+']⁺ = '+''.join(sorted(fds_closure)))
+                    relation_unequal_closure_list.append('['+attributes+']⁺ = '+''.join(sorted(relation_closure)))
+                
+    if(isPreserved == True): print('The sub-relations preserved all the dependencies.')
+    elif(printDiff == True): 
+        print('Relation Closure:')
+        for c in relation_unequal_closure_list:
+            print(c)
     return isPreserved
-        
         
 
 # Example usage:
@@ -181,6 +196,6 @@ fds = [('AB', 'C'), ('C', 'E'), ('B','D'), ('E','A')]
 print('Input:')
 print(fds)
 
-all_canonical_cover(fds)
 print_closure_list(fds, onlyCandidateKeys=True)
-isDependencyPreserved(fds, ['BCD', 'ACE'])
+is_dependency_preserved(fds, ['BCD', 'ACE'], printDiff=True)
+all_canonical_cover(fds)
