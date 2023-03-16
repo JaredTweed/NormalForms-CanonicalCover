@@ -1,5 +1,12 @@
 from itertools import combinations, permutations
 
+def check_strings(list_of_strings, given_string):
+    for string in list_of_strings:
+        if set(string).issubset(set(given_string)):
+            # All characters in at least one string exist in the given string.
+            return True
+    return False
+
 def fds_to_items(data):
     # Convert a set of functional dependencies to a string of all the attributes in the dependencies
     letters = set()
@@ -10,7 +17,7 @@ def fds_to_items(data):
     # Return the sorted string of attributes
     return ''.join(sorted(letters))
 
-def get_closure(attributes, fds, doPrint=False, onlyCandidateKeys=False):
+def get_closure(attributes, fds):
     # Compute the closure of a set of attributes under a set of functional dependencies
     
     # Set the closure to the original set of sorted attributes
@@ -31,12 +38,23 @@ def get_closure(attributes, fds, doPrint=False, onlyCandidateKeys=False):
                     closure |= set(Y)
                     changed = True
     
-    # If the doPrint parameter is True, print the closure
-    if(doPrint == True and (onlyCandidateKeys == False or ''.join(sorted(closure)) == fds_to_items(fds))):
-        print('['+attributes+']⁺ = '+''.join(sorted(closure)))
-    
     # Return the final closure
     return closure
+    
+def print_closure_list(fds, onlyCandidateKeys=False):
+    candidateKeyList = []
+    for length in range(1, len(fds_to_items(fds)) + 1):
+        for i in combinations(fds_to_items(fds), length):
+            attributes = "".join(sorted(i))
+            
+            closure = get_closure(attributes, fds)
+            
+            # Print the closure
+            if(onlyCandidateKeys == False):
+                print('['+attributes+']⁺ = '+''.join(sorted(closure)))
+            elif(''.join(sorted(closure)) == fds_to_items(fds) and check_strings(candidateKeyList, attributes) == False):
+                print('['+attributes+']⁺ = '+''.join(sorted(closure)))
+                candidateKeyList.append(str(attributes))
 
 def isSetClosureEqual(fds1, fds2):
     # Check if the closures of two sets of functional dependencies are equal
@@ -116,7 +134,5 @@ print(fds)
 print('---\nAll Canonical Covers:')
 all_canonical_cover(fds)
 print('---\nClosure:')
-for length in range(1, len(fds_to_items(fds)) + 1):
-    for i in combinations(fds_to_items(fds), length):
-        get_closure("".join(sorted(i)), fds, doPrint=True)
+print_closure_list(fds, onlyCandidateKeys=True)
 
