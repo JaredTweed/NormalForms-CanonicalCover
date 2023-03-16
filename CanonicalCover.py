@@ -1,9 +1,20 @@
 from itertools import combinations, permutations
 
-def get_closure(attributes, fds, doPrint=False):
+def fds_to_items(data):
+    # Convert a set of functional dependencies to a string of all the attributes in the dependencies
+    letters = set()
+    for item in data:
+        for letter in item:
+            letters.update(set(letter))
+    
+    # Return the sorted string of attributes
+    return ''.join(sorted(letters))
+
+def get_closure(attributes, fds, doPrint=False, onlyCandidateKeys=False):
     # Compute the closure of a set of attributes under a set of functional dependencies
     
-    # Set the closure to the original set of attributes
+    # Set the closure to the original set of sorted attributes
+    attributes = ''.join(sorted(attributes))
     closure = set(attributes)
     changed = True
     
@@ -21,23 +32,11 @@ def get_closure(attributes, fds, doPrint=False):
                     changed = True
     
     # If the doPrint parameter is True, print the closure
-    if(doPrint == True):
+    if(doPrint == True and (onlyCandidateKeys == False or ''.join(sorted(closure)) == fds_to_items(fds))):
         print('['+attributes+']⁺ = '+''.join(sorted(closure)))
     
     # Return the final closure
     return closure
-
-
-def fds_to_items(data):
-    # Convert a set of functional dependencies to a string of all the attributes in the dependencies
-    letters = set()
-    for item in data:
-        for letter in item:
-            letters.update(set(letter))
-    
-    # Return the sorted string of attributes
-    return ''.join(sorted(letters))
-
 
 def isSetClosureEqual(fds1, fds2):
     # Check if the closures of two sets of functional dependencies are equal
@@ -107,7 +106,6 @@ def all_canonical_cover(fds):
         if(cover not in fds_list):
             fds_list.append(cover)
     print(*fds_list, sep='\n')
-    
 
 # Example usage:
 # fds = [('AB', 'C'), ('C', 'D'), ('BD', 'E'), ('E', 'A'), ('A','C')]
