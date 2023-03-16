@@ -1,4 +1,5 @@
 from itertools import combinations, permutations
+from collections import defaultdict
 
 def check_strings(list_of_strings, given_string):
     for string in list_of_strings:
@@ -107,11 +108,29 @@ def find_canonical_cover(fds):
     
     return True, fds # if no extraneous attribute was found in any of the FDs, the set of FDs is the canonical cover
 
+def clean_fds(data):
+    d = defaultdict(list)
+
+    # Group the data based on the first element of each tuple
+    for key, value in data:
+        key = ''.join(sorted(key))
+        value = ''.join(sorted(value))
+        d[key].append(value)
+
+    # Merge the values of each group into a single string
+    result = [(key, ''.join(sorted(set(values)))) for key, values in d.items()]
+
+    # Sort the result based on the first element of each tuple
+    result = sorted(result, key=lambda x: x[0])
+
+    return result
+
 def call_canonical_cover(fds):
     # Call the find_canonical_cover function until no further changes are made
     isFinished = False
     while (isFinished == False):
         isFinished, fds = find_canonical_cover(fds)
+    fds = clean_fds(fds)
     fds.sort()
     return fds
     
@@ -122,8 +141,8 @@ def all_canonical_cover(fds):
         perm = list(permutation)
         cover = call_canonical_cover(perm)
         if(cover not in fds_list):
+            print(cover)
             fds_list.append(cover)
-    print(*fds_list, sep='\n')
 
 # Example usage:
 # fds = [('AB', 'C'), ('C', 'D'), ('BD', 'E'), ('E', 'A'), ('A','C')]
