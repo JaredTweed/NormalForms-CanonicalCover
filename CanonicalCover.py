@@ -74,32 +74,32 @@ def find_canonical_cover(fds):
     return True, fds
 
 def call_canonical_cover(fds):
+    isFinished = False
+    while (isFinished == False):
+        isFinished, fds = find_canonical_cover(fds)
+    fds.sort()
+    return fds
+    
+def all_canonical_cover(fds):
     fds_list = []
-    print(fds)
-        
     for permutation in permutations(fds):
         perm = list(permutation)
-        isFinished = False
-        while (isFinished == False):
-            isFinished, fds = find_canonical_cover(perm)
-        fds.sort()
-        # if(fds not in fds_list):
-        #     fds_list.append(fds)
-    return fds
+        cover = call_canonical_cover(perm)
+        if(cover not in fds_list):
+            fds_list.append(cover)
+    print(*fds_list, sep='\n')
     
 
 # Example usage:
 # fds = [('AB', 'C'), ('C', 'D'), ('BD', 'E'), ('E', 'A'), ('A','C')]
 # fds = [('A','BC'), ('B','C'), ('A','B'), ('AB','C')]
-# https://www.tutorialspoint.com/find-the-canonical-cover-of-fd-a-bc-b-ac-c-ab-in-dbms
 fds = [('A', 'B'), ('A','C'), ('B','A'), ('B','C'), ('C', 'A'), ('C', 'B')]
+
+all_canonical_cover(fds)
+print('---')
 canonical_cover = call_canonical_cover(fds)
 print(canonical_cover)
-get_closure('A', fds, doPrint=True)
-get_closure('B', fds, doPrint=True)
-get_closure('C', fds, doPrint=True)
-canonical_cover = call_canonical_cover(canonical_cover)
-canonical_cover.sort(key=lambda a: a[1])
-print(canonical_cover)
+# get_closure('A', fds, doPrint=True)
+# get_closure('B', fds, doPrint=True)
+# get_closure('C', fds, doPrint=True)
 
-print(canonical_cover)
