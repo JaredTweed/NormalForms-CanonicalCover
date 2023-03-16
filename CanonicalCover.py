@@ -22,7 +22,7 @@ def get_closure(attributes, fds, doPrint=False):
     
     # If the doPrint parameter is True, print the closure
     if(doPrint == True):
-        print('['+attributes+']+ = '+''.join(closure))
+        print('['+attributes+']⁺ = '+''.join(sorted(closure)))
     
     # Return the final closure
     return closure
@@ -118,6 +118,7 @@ print(fds)
 print('---\nAll Canonical Covers:')
 all_canonical_cover(fds)
 print('---\nClosure:')
-for i in fds_to_items(fds):
-    get_closure(i, fds, doPrint=True)
+for length in range(1, len(fds_to_items(fds)) + 1):
+    for i in combinations(fds_to_items(fds), length):
+        get_closure("".join(sorted(i)), fds, doPrint=True)
 
