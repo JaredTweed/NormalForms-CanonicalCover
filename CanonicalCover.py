@@ -43,6 +43,7 @@ def get_closure(attributes, fds):
     return closure
     
 def print_closure_list(fds, onlyCandidateKeys=False):
+    print('---\nClosure:')
     candidateKeyList = []
     for length in range(1, len(fds_to_items(fds)) + 1):
         for i in combinations(fds_to_items(fds), length):
@@ -135,6 +136,7 @@ def call_canonical_cover(fds):
     return fds
     
 def all_canonical_cover(fds):
+    print('---\nAll Canonical Covers:')
     # Find all possible canonical covers for a set of functional dependencies
     fds_list = []
     for permutation in permutations(fds):
@@ -143,15 +145,42 @@ def all_canonical_cover(fds):
         if(cover not in fds_list):
             print(cover)
             fds_list.append(cover)
+            
+def isDependencyPreserved(fds, relation_list):
+    print('---\nPreserved Dependencies:')
+    unpreservedPrintList = []
+    isPreserved = True
+    for index, (X, Y) in enumerate(fds):
+        Z_prev = set()
+        Z = set(X)
+        while(Z != Z_prev):
+            Z_prev = Z
+            for R in relation_list:
+                R = set(R)
+                Z = (get_closure(Z & R, fds) & R) | Z
+        if(Y in Z):
+            # Dependency is preserved
+            print('Index '+str(index)+': '+X+' → '+Y)
+        else: 
+            isPreserved = False
+            unpreservedPrintList.append('Index '+str(index)+': '+X+' → '+Y)
+    if(isPreserved == False): 
+        print('Non-Preserved Dependencies:')
+        for dep in unpreservedPrintList:
+            print(dep)
+    else: print('All dependencies are preserved after\ndecomposition into '+str(relation_list)+'.')
+    return isPreserved
+        
+        
 
 # Example usage:
 # fds = [('AB', 'C'), ('C', 'D'), ('BD', 'E'), ('E', 'A'), ('A','C')]
 # fds = [('A','BC'), ('B','C'), ('A','B'), ('AB','C')]
-fds = [('A', 'B'), ('A','C'), ('B','A'), ('B','C'), ('C', 'A'), ('C', 'B')]
+# fds = [('A', 'B'), ('A','C'), ('B','A'), ('B','C'), ('C', 'A'), ('C', 'B')]
+fds = [('AB', 'C'), ('C', 'E'), ('B','D'), ('E','A')]
 print('Input:')
 print(fds)
-print('---\nAll Canonical Covers:')
-all_canonical_cover(fds)
-print('---\nClosure:')
-print_closure_list(fds, onlyCandidateKeys=True)
 
+all_canonical_cover(fds)
+print_closure_list(fds, onlyCandidateKeys=True)
+isDependencyPreserved(fds, ['BCD', 'ACE'])
