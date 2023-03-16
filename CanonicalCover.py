@@ -149,6 +149,7 @@ def all_canonical_cover(fds):
 def is_dependency_preserved(fds, relation_list, printDiff=False):
     print('---\nDependencies Preservation:')
     relation_dep_set_list = []
+    relation_dep_set_print_list = []
     for R in relation_list:
         relation_dep_set = []
         # Find the closure for each combination of elements in the sub-relation
@@ -161,6 +162,7 @@ def is_dependency_preserved(fds, relation_list, printDiff=False):
                 if(rhs != ''): relation_dep_set.append((attributes, rhs))
         relation_dep_set = call_canonical_cover(relation_dep_set)
         relation_dep_set_list = relation_dep_set_list + relation_dep_set
+        relation_dep_set_print_list.append(relation_dep_set)
 
     # Check whether closure of fds == relation_dep_set_list
     isPreserved = True
@@ -174,6 +176,7 @@ def is_dependency_preserved(fds, relation_list, printDiff=False):
             if(fds_closure != relation_closure):
                 if(isPreserved == True): 
                     print('The sub-relations do not preserve all the dependencies.')
+                    print(relation_dep_set_print_list)
                     if(printDiff == True): print('The unequal closures are shown below.\nOriginal Closure:')
                     isPreserved = False
                 if(printDiff == True): 
