@@ -167,21 +167,21 @@ def is_dependency_preserved(fds, relation_list, printDiff=False):
     # Check whether closure of fds == relation_dep_set_list
     isPreserved = True
     relation_unequal_closure_list = []
-    for length in range(1, len(fds_to_items(fds)) + 1):
-        for i in combinations(fds_to_items(fds), length):
-            attributes = "".join(sorted(i))
-
-            fds_closure = get_closure(attributes, fds)
-            relation_closure = get_closure(attributes, relation_dep_set_list)
-            if(fds_closure != relation_closure):
-                if(isPreserved == True): 
-                    print('The sub-relations do not preserve all the dependencies.')
-                    print(relation_dep_set_print_list)
-                    if(printDiff == True): print('The unequal closures are shown below.\nOriginal Closure:')
-                    isPreserved = False
-                if(printDiff == True): 
-                    print('['+attributes+']⁺ = '+''.join(sorted(fds_closure)))
-                    relation_unequal_closure_list.append('['+attributes+']⁺ = '+''.join(sorted(relation_closure)))
+    for X, Y in fds:
+        # we only need to check the closure of the original determinant attributes
+        attributes = "".join(sorted(set(X)))
+    
+        fds_closure = get_closure(attributes, fds)
+        relation_closure = get_closure(attributes, relation_dep_set_list)
+        if(fds_closure != relation_closure):
+            if(isPreserved == True): 
+                print('The sub-relations do not preserve all the dependencies.')
+                print(relation_dep_set_print_list)
+                if(printDiff == True): print('The unequal closures are shown below.\nOriginal Closure:')
+                isPreserved = False
+            if(printDiff == True): 
+                print('['+attributes+']⁺ = '+''.join(sorted(fds_closure)))
+                relation_unequal_closure_list.append('['+attributes+']⁺ = '+''.join(sorted(relation_closure)))
                 
     if(isPreserved == True): print('The sub-relations preserved all the dependencies.')
     elif(printDiff == True): 
