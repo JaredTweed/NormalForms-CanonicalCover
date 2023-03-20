@@ -183,7 +183,9 @@ def is_dependency_preserved(fds, relation_list, printDiff=False):
                 print('['+attributes+']⁺ = '+''.join(sorted(fds_closure)))
                 relation_unequal_closure_list.append('['+attributes+']⁺ = '+''.join(sorted(relation_closure)))
                 
-    if(isPreserved == True): print('The sub-relations preserved all the dependencies.')
+    if(isPreserved == True): 
+        print('The sub-relations preserved all the dependencies.\nSub-relation functional dependencies below:')
+        print(relation_dep_set_print_list)
     elif(printDiff == True): 
         print('Relation Closure:')
         for c in relation_unequal_closure_list:
