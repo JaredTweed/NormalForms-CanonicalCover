@@ -195,46 +195,57 @@ def is_dependency_preserved(fds, relation_list, printDiff=False):
 def is_pair_lossless(fds, R1, R2):
     intersection = set(R1) & set(R2)
     intersection_closure = get_closure("".join(sorted(intersection)), fds)
-    if(intersection_closure.issubset(set(R1)) or intersection_closure.issubset(set(R2))):
+    if(set(R1).issubset(intersection_closure) or set(R2).issubset(intersection_closure)):
         return True
     else: return False
     
-def is_lossless(fds, notJoinedRelations, joinedAttributes):
+def is_lossless(fds, notJoinedRelations, joinedAttributes, joinOrder):
     output = False
     if(len(notJoinedRelations) == 0): return True
     for R in notJoinedRelations:
         if(is_pair_lossless(fds, joinedAttributes, R)):
             notJoinedRelations.remove(R)
             joinedAttributes = joinedAttributes | set(R)
-            output = is_lossless(fds, notJoinedRelations, joinedAttributes)
-            return output
-    return output
+            output = is_lossless(fds, notJoinedRelations, joinedAttributes, joinOrder)
+            if(output == True): joinOrder.insert(0, R)
+            return output, joinOrder
+    return output, joinOrder
 
 def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
     print('---\nCheck For Losslessness:')
     isLossless = False
-    notJoinedRelations = set(relation_list)
     joinOrder = []
     
     for R_pair in combinations(relation_list, 2):
+        notJoinedRelations = set(relation_list)
         R_pair_l = list(R_pair)
+        # print(R_pair_l[0], R_pair_l[1])
         if(is_pair_lossless(fds, R_pair_l[0], R_pair_l[1])):
+            # print(R_pair_l[0], R_pair_l[1])
             notJoinedRelations.remove(R_pair_l[0])
             notJoinedRelations.remove(R_pair_l[1])
             joinedAttributes = set(R_pair_l[0]) | set(R_pair_l[1])
             if(len(notJoinedRelations) != 0):
-                if(is_lossless(fds, notJoinedRelations, joinedAttributes) == True):
+                # print(R_pair_l[0], R_pair_l[1])
+                output, joinOrder = is_lossless(fds, notJoinedRelations, joinedAttributes, joinOrder)
+                if(output == True):
                     print('The decomposition is lossless.')
-                    return
-                else:
-                    print('The decomposition is lossy.')
-                    return
+                    joinOrder.insert(0, R_pair_l[1])
+                    joinOrder.insert(0, R_pair_l[0])
+                    isLossless = True
+                    break
             else: 
                 print('The decomposition is lossless.')
-                if(printJoinOrder):print(set(R_pair))
-                return
+                joinOrder.insert(0, R_pair_l[1])
+                joinOrder.insert(0, R_pair_l[0])
+                isLossless = True
+                break
+    if(isLossless == False): print('The decomposition is lossy.')
+    elif(printJoinOrder):
+        print('Relation join order:')
+        for i,R in enumerate(joinOrder):
+            print(str(i+1)+'. '+R)
                 
-    # for R in relation_list: print(set(R))
     
 
 # Example usage:
@@ -242,11 +253,12 @@ def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
 # fds = [('A','BC'), ('B','C'), ('A','B'), ('AB','C')]
 # fds = [('A', 'B'), ('A','C'), ('B','A'), ('B','C'), ('C', 'A'), ('C', 'B')]
 # fds = [('AB', 'C'), ('C', 'E'), ('B','D'), ('E','A')] # ['BCD', 'ACE'] dependency preservation example
-fds = [('AB', 'C'),('C', 'D'),('D', 'EF'),('F', 'A'),('D', 'B')] # ['ABC', 'CDE', 'EF'] is lossy
+# fds = [('AB', 'C'),('C', 'D'),('D', 'EF'),('F', 'A'),('D', 'B')] # ['ABC', 'CDE', 'EF'] is lossy
+fds = [('AB', 'C'),('C', 'D'),('D', 'EF'),('F', 'A'),('D', 'B'),('E', 'F')] # ['ABC', 'CDE', 'EF'] is lossless
 print('Input:')
 print(fds)
 
 print_closure_list(fds, onlyCandidateKeys=True)
 is_dependency_preserved(fds, ['ABC', 'CDE', 'EF'], printDiff=True)
-all_canonical_cover(fds)
-is_decomposition_lossless(fds, ['ABC', 'CDE', 'EF'])
+# all_canonical_cover(fds)
+is_decomposition_lossless(fds, ['ABC', 'CDE', 'EF'], printJoinOrder=True)
