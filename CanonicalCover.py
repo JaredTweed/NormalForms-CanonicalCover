@@ -192,15 +192,61 @@ def is_dependency_preserved(fds, relation_list, printDiff=False):
             print(c)
     return isPreserved
         
+def is_pair_lossless(fds, R1, R2):
+    intersection = set(R1) & set(R2)
+    intersection_closure = get_closure("".join(sorted(intersection)), fds)
+    if(intersection_closure.issubset(set(R1)) or intersection_closure.issubset(set(R2))):
+        return True
+    else: return False
+    
+def is_lossless(fds, notJoinedRelations, joinedAttributes):
+    output = False
+    if(len(notJoinedRelations) == 0): return True
+    for R in notJoinedRelations:
+        if(is_pair_lossless(fds, joinedAttributes, R)):
+            notJoinedRelations.remove(R)
+            joinedAttributes = joinedAttributes | set(R)
+            output = is_lossless(fds, notJoinedRelations, joinedAttributes)
+            return output
+    return output
+
+def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
+    print('---\nCheck For Losslessness:')
+    isLossless = False
+    notJoinedRelations = set(relation_list)
+    joinOrder = []
+    
+    for R_pair in combinations(relation_list, 2):
+        R_pair_l = list(R_pair)
+        if(is_pair_lossless(fds, R_pair_l[0], R_pair_l[1])):
+            notJoinedRelations.remove(R_pair_l[0])
+            notJoinedRelations.remove(R_pair_l[1])
+            joinedAttributes = set(R_pair_l[0]) | set(R_pair_l[1])
+            if(len(notJoinedRelations) != 0):
+                if(is_lossless(fds, notJoinedRelations, joinedAttributes) == True):
+                    print('The decomposition is lossless.')
+                    return
+                else:
+                    print('The decomposition is lossy.')
+                    return
+            else: 
+                print('The decomposition is lossless.')
+                if(printJoinOrder):print(set(R_pair))
+                return
+                
+    # for R in relation_list: print(set(R))
+    
 
 # Example usage:
 # fds = [('AB', 'C'), ('C', 'D'), ('BD', 'E'), ('E', 'A'), ('A','C')]
 # fds = [('A','BC'), ('B','C'), ('A','B'), ('AB','C')]
 # fds = [('A', 'B'), ('A','C'), ('B','A'), ('B','C'), ('C', 'A'), ('C', 'B')]
-fds = [('AB', 'C'), ('C', 'E'), ('B','D'), ('E','A')]
+# fds = [('AB', 'C'), ('C', 'E'), ('B','D'), ('E','A')] # ['BCD', 'ACE'] dependency preservation example
+fds = [('AB', 'C'),('C', 'D'),('D', 'EF'),('F', 'A'),('D', 'B')] # ['ABC', 'CDE', 'EF'] is lossy
 print('Input:')
 print(fds)
 
 print_closure_list(fds, onlyCandidateKeys=True)
-is_dependency_preserved(fds, ['BCD', 'ACE'], printDiff=True)
+is_dependency_preserved(fds, ['ABC', 'CDE', 'EF'], printDiff=True)
 all_canonical_cover(fds)
+is_decomposition_lossless(fds, ['ABC', 'CDE', 'EF'])
