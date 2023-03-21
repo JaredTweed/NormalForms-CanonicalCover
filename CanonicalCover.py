@@ -146,10 +146,8 @@ def all_canonical_cover(fds):
             print(cover)
             fds_list.append(cover)
             
-def is_dependency_preserved(fds, relation_list, printDiff=False):
-    print('---\nDependencies Preservation:')
+def subrelation_fds(fds, relation_list):
     relation_dep_set_list = []
-    relation_dep_set_print_list = []
     for R in relation_list:
         relation_dep_set = []
         # Find the closure for each combination of elements in the sub-relation
@@ -162,8 +160,17 @@ def is_dependency_preserved(fds, relation_list, printDiff=False):
                 if(rhs != ''): relation_dep_set.append((attributes, rhs))
         relation_dep_set = call_canonical_cover(relation_dep_set)
         # relation_dep_set may be empty, and that is okay
-        relation_dep_set_list = relation_dep_set_list + relation_dep_set 
-        relation_dep_set_print_list.append(relation_dep_set)
+        relation_dep_set_list.append(relation_dep_set)
+    return relation_dep_set_list
+
+def is_dependency_preserved(fds, relation_list, printDiff=False):
+    print('---\nDependencies Preservation:')
+    
+    # Find the preserved subrelation dependencies
+    relation_dep_set_print_list = subrelation_fds(fds, relation_list)
+    relation_dep_set_list = []
+    for sublist in relation_dep_set_print_list:
+        relation_dep_set_list.extend(sublist)
 
     # Check whether closure of fds == relation_dep_set_list
     isPreserved = True
