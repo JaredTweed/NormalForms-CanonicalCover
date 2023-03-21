@@ -192,56 +192,65 @@ def is_dependency_preserved(fds, relation_list, printDiff=False):
             print(c)
     return isPreserved
         
+# Check if R1 and R2 are pair lossless with respect to fds
 def is_pair_lossless(fds, R1, R2):
     intersection = set(R1) & set(R2)
     intersection_closure = get_closure("".join(sorted(intersection)), fds)
+    # If either R1 or R2 is a subset of the intersection closure, then the pair is lossless
     if(set(R1).issubset(intersection_closure) or set(R2).issubset(intersection_closure)):
         return True
     else: return False
     
+# Check if the given set of relations (notJoinedRelations) can be joined losslessly
+# joinedAttributes are the set of joined attributes so far
+# joinOrder keeps track of the order in which the relations are joined
 def is_lossless(fds, notJoinedRelations, joinedAttributes, joinOrder):
     output = False
+    # If all relations have been joined, return True
     if(len(notJoinedRelations) == 0): return True
+    # Try joining each relation in notJoinedRelations with joinedAttributes to see if it is a lossless pair
     for R in notJoinedRelations:
         if(is_pair_lossless(fds, joinedAttributes, R)):
             notJoinedRelations.remove(R)
             joinedAttributes = joinedAttributes | set(R)
+            # recursively check if the remaining relations can be joined losslessly
             output = is_lossless(fds, notJoinedRelations, joinedAttributes, joinOrder)
             if(output == True): joinOrder.insert(0, R)
             return output, joinOrder
     return output, joinOrder
 
+# Check if a given decomposition of relations is lossless
 def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
     print('---\nCheck For Losslessness:')
     isLossless = False
     joinOrder = []
     
+    # Try joining each pair of relations to see if the decomposition is lossless
     for R_pair in combinations(relation_list, 2):
         notJoinedRelations = set(relation_list)
         R_pair_l = list(R_pair)
-        # print(R_pair_l[0], R_pair_l[1])
+        # If the pair is pair lossless, join them and then recursively check if the remaining relations can be joined losslessly
         if(is_pair_lossless(fds, R_pair_l[0], R_pair_l[1])):
-            # print(R_pair_l[0], R_pair_l[1])
             notJoinedRelations.remove(R_pair_l[0])
             notJoinedRelations.remove(R_pair_l[1])
             joinedAttributes = set(R_pair_l[0]) | set(R_pair_l[1])
             if(len(notJoinedRelations) != 0):
-                # print(R_pair_l[0], R_pair_l[1])
                 output, joinOrder = is_lossless(fds, notJoinedRelations, joinedAttributes, joinOrder)
                 if(output == True):
-                    print('The decomposition is lossless.')
+                    # If the decomposition is lossless, update joinOrder and set isLossless to True
                     joinOrder.insert(0, R_pair_l[1])
                     joinOrder.insert(0, R_pair_l[0])
                     isLossless = True
                     break
             else: 
-                print('The decomposition is lossless.')
+                # If all relations have been joined and the decomposition is lossless, update joinOrder and set isLossless to True
                 joinOrder.insert(0, R_pair_l[1])
                 joinOrder.insert(0, R_pair_l[0])
                 isLossless = True
                 break
     if(isLossless == False): print('The decomposition is lossy.')
     elif(printJoinOrder):
+        print('The decomposition is lossless.')
         print('Relation join order:')
         for i,R in enumerate(joinOrder):
             print(str(i+1)+'. '+R)
@@ -260,5 +269,5 @@ print(fds)
 
 print_closure_list(fds, onlyCandidateKeys=True)
 is_dependency_preserved(fds, ['ABC', 'CDE', 'EF'], printDiff=True)
-# all_canonical_cover(fds)
 is_decomposition_lossless(fds, ['ABC', 'CDE', 'EF'], printJoinOrder=True)
+all_canonical_cover(fds)
