@@ -252,8 +252,18 @@ def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
     elif(printJoinOrder):
         print('The decomposition is lossless.')
         print('Relation join order:')
+        print('Relation\tAlready Merged\t\tIntersection Closure')
+        already_merged = ''
         for i,R in enumerate(joinOrder):
-            print(str(i+1)+'. '+R)
+            if(i != 0):
+                print(str(i+1)+'. '+R, end='\t\t')
+                already_merged = ''.join(sorted(set(already_merged) | set(R)))
+                print(already_merged, end='\t\t\t')
+                attributes = ''.join(sorted(set(joinOrder[i-1]) & set(R)))
+                print('['+attributes+']⁺ = '+''.join(sorted(get_closure(attributes, fds))))
+            else: 
+                print(str(i+1)+'. '+R)
+                already_merged = ''.join(sorted(set(R)))
                 
     
 
