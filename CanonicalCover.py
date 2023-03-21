@@ -41,22 +41,36 @@ def get_closure(attributes, fds):
     
     # Return the final closure
     return closure
-    
-def print_closure_list(fds, onlyCandidateKeys=False):
-    print('---\nClosure:')
+                    
+def candidate_key_list(fds):
+    fdsItems = fds_to_items(fds)
     candidateKeyList = []
-    for length in range(1, len(fds_to_items(fds)) + 1):
-        for i in combinations(fds_to_items(fds), length):
+    for length in range(1, len(fdsItems) + 1):
+        for i in combinations(fdsItems, length):
             attributes = "".join(sorted(i))
             
             closure = get_closure(attributes, fds)
             
-            # Print the closure
-            if(onlyCandidateKeys == False):
-                print('['+attributes+']⁺ = '+''.join(sorted(closure)))
-            elif(''.join(sorted(closure)) == fds_to_items(fds) and check_strings(candidateKeyList, attributes) == False):
-                print('['+attributes+']⁺ = '+''.join(sorted(closure)))
+            # Append list if the attributes are a candidate key
+            if(''.join(sorted(closure)) == fdsItems and check_strings(candidateKeyList, attributes) == False):
                 candidateKeyList.append(str(attributes))
+    return candidateKeyList
+
+def print_closure_list(fds, onlyCandidateKeys=False):
+    print('---\nClosure:')
+    fdsItems = fds_to_items(fds)
+    if(onlyCandidateKeys == False):
+        for length in range(1, len(fdsItems) + 1):
+            for i in combinations(fdsItems, length):
+                attributes = "".join(sorted(i))
+                closure = get_closure(attributes, fds)
+                
+                # Print the closure
+                print('['+attributes+']⁺ = '+''.join(sorted(closure)))
+    else:
+        candidateKeyList = candidate_key_list(fds)
+        for attributes in candidateKeyList:
+            print('['+attributes+']⁺ = '+fdsItems)
 
 def isSetClosureEqual(fds1, fds2):
     # Check if the closures of two sets of functional dependencies are equal
