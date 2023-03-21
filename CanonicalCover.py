@@ -161,9 +161,9 @@ def is_dependency_preserved(fds, relation_list, printDiff=False):
                 rhs = ''.join(sorted((get_closure(attributes, fds) & set(R)) - set(attributes)))
                 if(rhs != ''): relation_dep_set.append((attributes, rhs))
         relation_dep_set = call_canonical_cover(relation_dep_set)
-        if(relation_dep_set != []):
-            relation_dep_set_list = relation_dep_set_list + relation_dep_set
-            relation_dep_set_print_list.append(relation_dep_set)
+        # relation_dep_set may be empty, and that is okay
+        relation_dep_set_list = relation_dep_set_list + relation_dep_set 
+        relation_dep_set_print_list.append(relation_dep_set)
 
     # Check whether closure of fds == relation_dep_set_list
     isPreserved = True
