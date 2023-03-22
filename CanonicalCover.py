@@ -369,10 +369,35 @@ def is_decomposition_3NF(fds, decomposition, doPrint=True):
                 is_R_3NF = False
             else: is_R_3NF = False
             
-        
         if(not is_R_3NF): non_3NF_relations.append(decomposition[i])
         if(is_R_3NF and doPrint): print(f"{decomposition[i]} is in 3NF.")
     return non_3NF_relations
+    
+def is_decomposition_BCNF(fds, decomposition, doPrint=True, check3NF=True):
+    if(doPrint): print('---\nBCNF:')
+    
+    if(check3NF):
+        if(is_decomposition_3NF(fds, decomposition, doPrint=False) != []):
+            if(doPrint): print('The decomposition is not in BCNF because it is not in 3NF.')
+            return
+    
+    non_BCNF_relations = []
+    decomposition_fds = subrelation_fds(fds, decomposition)
+    for i, R_fds in enumerate(decomposition_fds):
+        is_R_BCNF = True
+        R_fdsItems = fds_to_items(R_fds)
+        for X, Y in decomposition_fds[i]:
+            if(set(Y).issubset(X)): continue
+            if(''.join(sorted(get_closure(X, R_fds))) == R_fdsItems): 
+                # print(X, Y, ''.join(sorted(get_closure(X, R_fds))))
+                continue
+        
+            is_R_BCNF = False
+            print(f"{X}->{Y} is not in BCNF because ["+X+']⁺ = '+''.join(sorted(get_closure(X, R_fds))))
+            
+        if(not is_R_BCNF): non_BCNF_relations.append(decomposition[i])
+        if(is_R_BCNF and doPrint): print(f"{decomposition[i]} is in BCNF.")
+    return non_BCNF_relations
 
 # Example usage:
 # fds = [('AB', 'C'), ('C', 'D'), ('BD', 'E'), ('E', 'A'), ('A','C')]
@@ -380,16 +405,18 @@ def is_decomposition_3NF(fds, decomposition, doPrint=True):
 # fds = [('A', 'B'), ('A','C'), ('B','A'), ('B','C'), ('C', 'A'), ('C', 'B')]
 # fds = [('AB', 'C'), ('C', 'E'), ('B','D'), ('E','A')] # ['BCD', 'ACE'] dependency preservation example
 # fds = [('AB', 'C'),('C', 'D'),('D', 'EF'),('F', 'A'),('D', 'B')] # ['ABC', 'CDE', 'EF'] is lossy
-# fds = [('AB', 'C'),('C', 'D'),('D', 'EF'),('F', 'A'),('D', 'B'),('E', 'F')] # ['ABC', 'CDE', 'EF'] is lossless
-fds = [('A','B'), ('AB', 'CDE')] # [fds_to_items(fds)] should not be in 3NF
+fds = [('AB', 'C'),('C', 'D'),('D', 'EF'),('F', 'A'),('D', 'B'),('E', 'F')] # ['ABC', 'CDE', 'EF'] is lossless
+# fds = [('A','B'), ('AB', 'CDE')] # [fds_to_items(fds)] should not be in 3NF
 print('Input:')
 print(fds)
 
-decomposition = [fds_to_items(fds)]
+decomposition = ['ABC', 'CDEF']
 print(decomposition)
 
 print_closure_list(fds, onlyCandidateKeys=True)
 is_dependency_preserved(fds, decomposition, printDiff=True)
 is_decomposition_lossless(fds, decomposition, printJoinOrder=True)
+is_decomposition_2NF(fds, decomposition)
 is_decomposition_3NF(fds, decomposition)
+is_decomposition_BCNF(fds, decomposition)
 all_canonical_cover(fds)
