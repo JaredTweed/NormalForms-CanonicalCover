@@ -41,7 +41,7 @@ def get_closure(attributes, fds):
     
     # Return the final closure
     return closure
-                    
+
 def candidate_key_list(fds):
     fdsItems = fds_to_items(fds)
     candidateKeyList = []
@@ -161,6 +161,8 @@ def all_canonical_cover(fds):
             fds_list.append(cover)
             
 def subrelation_fds(fds, relation_list):
+    if(len(relation_list) == 1): return [fds]
+    
     relation_dep_set_list = []
     for R in relation_list:
         relation_dep_set = []
@@ -179,12 +181,16 @@ def subrelation_fds(fds, relation_list):
 
 def is_dependency_preserved(fds, relation_list, printDiff=False):
     print('---\nDependencies Preservation:')
+    if(len(relation_list) == 1): 
+        print('All dependencies are preserved because no decomposition occured.')
+        return True
     
     # Find the preserved subrelation dependencies
     relation_dep_set_print_list = subrelation_fds(fds, relation_list)
     relation_dep_set_list = []
     for sublist in relation_dep_set_print_list:
         relation_dep_set_list.extend(sublist)
+    print(relation_dep_set_list)
 
     # Check whether closure of fds == relation_dep_set_list
     isPreserved = True
@@ -245,6 +251,9 @@ def is_lossless(fds, notJoinedRelations, joinedAttributes, joinOrder):
 def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
     print('---\nCheck For Losslessness:')
     isLossless = False
+    if(len(relation_list) == 1): 
+        print('The decomposition is lossless.')
+        return
     joinOrder = []
     
     # Try joining each pair of relations to see if the decomposition is lossless
@@ -286,8 +295,84 @@ def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
             else: 
                 print(str(i+1)+'. '+R)
                 already_merged = ''.join(sorted(set(R)))
-                
+
+def prime_attributes(fds):
+    candidateKeys = candidate_key_list(fds)
     
+    # create a set to hold the prime_attributes
+    prime_attributes = set()
+    
+    # loop over each string in the list and add its letters to the set
+    for keys in candidateKeys:
+        for attribute in keys:
+            prime_attributes.add(attribute)
+    
+    # convert the set back to a string, sort it, and return it
+    return ''.join(sorted(prime_attributes))
+    
+
+def is_decomposition_2NF(fds, decomposition, doPrint=True):
+    if(doPrint): print('---\n2NF:')
+    non_2NF_relations = []
+    decomposition_fds = subrelation_fds(fds, decomposition)
+    for i, R_fds in enumerate(decomposition_fds):
+        prime_attribute_list = prime_attributes(R_fds)
+        is_R_2NF = True
+        for X, Y in decomposition_fds[i]:
+            # Perform the test if any attribute in Y is non-prime
+            nonprimeY = []
+            for attribute in Y:
+                if (attribute not in prime_attribute_list):
+                    nonprimeY.append(attribute)
+            if(nonprimeY == []): 
+                continue
+            
+            # Check if the set of attributes in X is a proper subset of any candidate key
+            properSubsets = set()
+            for key in candidate_key_list(decomposition_fds[i]):
+                if set(X).issubset(set(key)) and set(X) != set(key):
+                    properSubsets.add(key)
+                    is_R_2NF = False
+            
+            # Print
+            if(doPrint and is_R_2NF == False): print(f"{decomposition[i]} is not in 2NF because '{X}' is a proper subset of the candidate keys in '{properSubsets}'.")    
+        
+        if(not is_R_2NF): non_2NF_relations.append(decomposition[i])
+        if(is_R_2NF and doPrint): print(f"{decomposition[i]} is in 2NF.")
+    return non_2NF_relations
+
+def is_decomposition_3NF(fds, decomposition, doPrint=True):
+    if(doPrint): print('---\n3NF:')
+    
+    if(is_decomposition_2NF(fds, decomposition, doPrint=False) != []):
+        if(doPrint): print('The decomposition is not in 3NF because it is not in 2NF.')
+    
+    non_3NF_relations = []
+    decomposition_fds = subrelation_fds(fds, decomposition)
+    for i, R_fds in enumerate(decomposition_fds):
+        prime_attribute_list = prime_attributes(R_fds)
+        is_R_3NF = True
+        for X, Y in decomposition_fds[i]:
+            # Perform the test if all the attributes in X are non-prime
+            is_X_nonprime = True
+            if (X in prime_attribute_list): is_X_nonprime = False
+            if(is_X_nonprime == False): continue
+            
+            # Perform the test if any attribute in Y is non-prime
+            nonprimeY = []
+            for attribute in Y:
+                if (attribute not in prime_attribute_list):
+                    nonprimeY.append(attribute)
+            if(nonprimeY == []): continue
+            elif(doPrint):
+                print(f"{decomposition[i]} is not in 3NF because both {X} and {Y} are non-prime, and {X}->{Y} is in {decomposition[i]}.")
+                is_R_3NF = False
+            else: is_R_3NF = False
+            
+        
+        if(not is_R_3NF): non_3NF_relations.append(decomposition[i])
+        if(is_R_3NF and doPrint): print(f"{decomposition[i]} is in 3NF.")
+    return non_3NF_relations
 
 # Example usage:
 # fds = [('AB', 'C'), ('C', 'D'), ('BD', 'E'), ('E', 'A'), ('A','C')]
@@ -295,11 +380,16 @@ def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
 # fds = [('A', 'B'), ('A','C'), ('B','A'), ('B','C'), ('C', 'A'), ('C', 'B')]
 # fds = [('AB', 'C'), ('C', 'E'), ('B','D'), ('E','A')] # ['BCD', 'ACE'] dependency preservation example
 # fds = [('AB', 'C'),('C', 'D'),('D', 'EF'),('F', 'A'),('D', 'B')] # ['ABC', 'CDE', 'EF'] is lossy
-fds = [('AB', 'C'),('C', 'D'),('D', 'EF'),('F', 'A'),('D', 'B'),('E', 'F')] # ['ABC', 'CDE', 'EF'] is lossless
+# fds = [('AB', 'C'),('C', 'D'),('D', 'EF'),('F', 'A'),('D', 'B'),('E', 'F')] # ['ABC', 'CDE', 'EF'] is lossless
+fds = [('A','B'), ('AB', 'CDE')] # [fds_to_items(fds)] should not be in 3NF
 print('Input:')
 print(fds)
 
+decomposition = [fds_to_items(fds)]
+print(decomposition)
+
 print_closure_list(fds, onlyCandidateKeys=True)
-is_dependency_preserved(fds, ['ABC', 'CDE', 'EF'], printDiff=True)
-is_decomposition_lossless(fds, ['ABC', 'CDE', 'EF'], printJoinOrder=True)
+is_dependency_preserved(fds, decomposition, printDiff=True)
+is_decomposition_lossless(fds, decomposition, printJoinOrder=True)
+is_decomposition_3NF(fds, decomposition)
 all_canonical_cover(fds)
