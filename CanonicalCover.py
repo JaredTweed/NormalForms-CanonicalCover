@@ -45,6 +45,7 @@ def get_closure(attributes, fds):
 def candidate_key_list(fds):
     fdsItems = fds_to_items(fds)
     candidateKeyList = []
+    minKeyLengthFound = False
     for length in range(1, len(fdsItems) + 1):
         for i in combinations(fdsItems, length):
             attributes = "".join(sorted(i))
@@ -54,6 +55,8 @@ def candidate_key_list(fds):
             # Append list if the attributes are a candidate key
             if(''.join(sorted(closure)) == fdsItems and check_strings(candidateKeyList, attributes) == False):
                 candidateKeyList.append(str(attributes))
+                minKeyLengthFound = True
+        if(minKeyLengthFound): break
     return candidateKeyList
 
 def print_closure_list(fds, onlyCandidateKeys=False):
