@@ -45,7 +45,6 @@ def get_closure(attributes, fds):
 def candidate_key_list(fds):
     fdsItems = fds_to_items(fds)
     candidateKeyList = []
-    minKeyLengthFound = False
     for length in range(1, len(fdsItems) + 1):
         for i in combinations(fdsItems, length):
             attributes = "".join(sorted(i))
@@ -55,8 +54,6 @@ def candidate_key_list(fds):
             # Append list if the attributes are a candidate key
             if(''.join(sorted(closure)) == fdsItems and check_strings(candidateKeyList, attributes) == False):
                 candidateKeyList.append(str(attributes))
-                minKeyLengthFound = True
-        if(minKeyLengthFound): break
     return candidateKeyList
 
 def print_closure_list(fds, onlyCandidateKeys=False):
@@ -376,13 +373,12 @@ def is_decomposition_3NF(fds, decomposition, doPrint=True):
         if(is_R_3NF and doPrint): print(f"{decomposition[i]} is in 3NF.")
     return non_3NF_relations
     
-def is_decomposition_BCNF(fds, decomposition, doPrint=True, check3NF=True):
+def is_decomposition_BCNF(fds, decomposition, doPrint=True):
     if(doPrint): print('---\nBCNF:')
     
-    if(check3NF):
-        if(is_decomposition_3NF(fds, decomposition, doPrint=False) != []):
-            if(doPrint): print('The decomposition is not in BCNF because it is not in 3NF.')
-            return
+    if(is_decomposition_3NF(fds, decomposition, doPrint=False) != []):
+        if(doPrint): print('The decomposition is not in BCNF because it is not in 3NF.')
+        return
     
     non_BCNF_relations = []
     decomposition_fds = subrelation_fds(fds, decomposition)
