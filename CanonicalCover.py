@@ -225,76 +225,61 @@ def is_pair_lossless(fds, R1, R2):
     intersection = set(R1) & set(R2)
     intersection_closure = get_closure("".join(sorted(intersection)), fds)
     # If either R1 or R2 is a subset of the intersection closure, then the pair is lossless
-    if(set(R1).issubset(intersection_closure) or set(R2).issubset(intersection_closure)):
-        return True
-    else: return False
+    return set(R1).issubset(intersection_closure) or set(R2).issubset(intersection_closure)
     
 # Check if the given set of relations (notJoinedRelations) can be joined losslessly
 # joinedAttributes are the set of joined attributes so far
 # joinOrder keeps track of the order in which the relations are joined
 def is_lossless(fds, notJoinedRelations, joinedAttributes, joinOrder):
-    output = False
     # If all relations have been joined, return True
-    if(len(notJoinedRelations) == 0): return True
+    if(len(notJoinedRelations) == 0): return True, joinOrder
+    
     # Try joining each relation in notJoinedRelations with joinedAttributes to see if it is a lossless pair
     for R in notJoinedRelations:
         if(is_pair_lossless(fds, joinedAttributes, R)):
-            notJoinedRelations.remove(R)
-            joinedAttributes = joinedAttributes | set(R)
+            # Iterate over a copy to avoid modification issues
+            newNotJoined = notJoinedRelations.copy()
+            newNotJoined.remove(R)
+            newJoinedAttributes = joinedAttributes | set(R)
+            newJoinOrder = joinOrder + [R]
+
             # recursively check if the remaining relations can be joined losslessly
-            output = is_lossless(fds, notJoinedRelations, joinedAttributes, joinOrder)
-            if(output == True): joinOrder.insert(0, R)
-            return output, joinOrder
-    return output, joinOrder
+            output, newJoinOrder = is_lossless(fds, newNotJoined, newJoinedAttributes, newJoinOrder)
+            if output: return True, newJoinOrder  # Return immediately if a lossless join is found
+    return False, joinOrder
 
 # Check if a given decomposition of relations is lossless
 def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
     print('---\nCheck For Losslessness:')
-    isLossless = False
-    if(len(relation_list) == 1): 
+    if len(relation_list) == 1: 
         print('The decomposition is lossless.')
-        return
-    joinOrder = []
-    
-    # Try joining each pair of relations to see if the decomposition is lossless
+        return True
+
     for R_pair in combinations(relation_list, 2):
-        notJoinedRelations = set(relation_list)
-        R_pair_l = list(R_pair)
-        # If the pair is pair lossless, join them and then recursively check if the remaining relations can be joined losslessly
-        if(is_pair_lossless(fds, R_pair_l[0], R_pair_l[1])):
-            notJoinedRelations.remove(R_pair_l[0])
-            notJoinedRelations.remove(R_pair_l[1])
-            joinedAttributes = set(R_pair_l[0]) | set(R_pair_l[1])
-            if(len(notJoinedRelations) != 0):
-                output, joinOrder = is_lossless(fds, notJoinedRelations, joinedAttributes, joinOrder)
-                if(output == True):
-                    # If the decomposition is lossless, update joinOrder and set isLossless to True
-                    joinOrder.insert(0, R_pair_l[1])
-                    joinOrder.insert(0, R_pair_l[0])
-                    isLossless = True
-                    break
-            else: 
-                # If all relations have been joined and the decomposition is lossless, update joinOrder and set isLossless to True
-                joinOrder.insert(0, R_pair_l[1])
-                joinOrder.insert(0, R_pair_l[0])
-                isLossless = True
-                break
-    if(isLossless == False): print('The decomposition is lossy.')
-    elif(printJoinOrder):
-        print('The decomposition is lossless.')
-        print('Relation join order:')
-        print('Relation\tAlready Merged\t\tIntersection Closure')
-        already_merged = ''
-        for i,R in enumerate(joinOrder):
-            if(i != 0):
-                print(str(i+1)+'. '+R, end='\t\t')
-                already_merged = ''.join(sorted(set(already_merged) | set(R)))
-                print(already_merged, end='\t\t\t')
-                attributes = ''.join(sorted(set(joinOrder[i-1]) & set(R)))
-                print('['+attributes+']⁺ = '+''.join(sorted(get_closure(attributes, fds))))
-            else: 
-                print(str(i+1)+'. '+R)
-                already_merged = ''.join(sorted(set(R)))
+        notJoinedRelations = set(relation_list) - set(R_pair)
+        joinedAttributes = set(R_pair[0]) | set(R_pair[1])
+        output, joinOrder = is_lossless(fds, notJoinedRelations, joinedAttributes, list(R_pair))
+        
+        # Printing the results
+        if output:
+            if printJoinOrder:
+                print('The decomposition is lossless.')
+                print('Relation join order:')
+                alreadyJoinedAttrs = set()
+                for i in range(len(joinOrder)-1):
+                    alreadyJoinedAttrs.update(joinOrder[i])  # Update with attributes from the current relation
+                    intersection = alreadyJoinedAttrs & set(joinOrder[i+1])
+                    intersection_closure = get_closure("".join(sorted(intersection)), fds)
+                    # Convert alreadyJoinedAttrs to a sorted list for printing
+                    alreadyJoinedAttrs_sorted = ''.join(sorted(alreadyJoinedAttrs))
+                    print(f'{alreadyJoinedAttrs_sorted} -> {joinOrder[i+1]}: [{"".join(sorted(intersection))}]⁺ = {"".join(sorted(intersection_closure))}')
+                    alreadyJoinedAttrs.update(joinOrder[i+1])  # Update with attributes from the next relation
+            else:
+                print('The decomposition is lossless.')
+            return True
+
+    print('The decomposition is lossy.')
+    return False
 
 def prime_attributes(fds):
     candidateKeys = candidate_key_list(fds)
