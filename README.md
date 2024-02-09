@@ -14,8 +14,20 @@ This Python script is a tool for analyzing functional dependencies in a relation
 
 ```python
 # Example usage:
-fds = [('AB','C'), ('C', 'B'), ('AB', 'B')]  # Replace with your functional dependencies
-decomposition = [fds_to_items(fds)]  # Initial decomposition
+fds = [  # Replace with your functional dependencies
+    ('ABC', 'D'), 
+    ('AB', 'CEA'), 
+    ('A', 'EF'), 
+    ('GH', 'I'), 
+    ('G', 'HJ'), 
+    ('ABC', 'GHE'), 
+    ('KL', 'M'), 
+    ('K', 'L'), 
+    ('ABN', 'OPQ'), 
+    ('Q', 'N'), 
+    ('AE', 'K')
+]
+decomposition = ['ABCDG', 'GHJI', 'AEFK', 'KLM', 'ABNOPQ']  # Initial decomposition
 print('Input:')
 print(fds)
 
