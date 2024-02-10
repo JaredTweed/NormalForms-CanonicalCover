@@ -259,7 +259,7 @@ def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
     # Printing the results
     if output:
         print('The decomposition is lossless.')
-        if printJoinOrder & len(relation_list) > 1:
+        if printJoinOrder:
             print('Relation join order:')
             alreadyJoinedAttrs = set()
             for i in range(len(joinOrder)-1):
@@ -268,7 +268,8 @@ def is_decomposition_lossless(fds, relation_list, printJoinOrder=False):
                 intersection_closure = get_closure("".join(sorted(intersection)), fds)
                 # Convert alreadyJoinedAttrs to a sorted list for printing
                 alreadyJoinedAttrs_sorted = ''.join(sorted(alreadyJoinedAttrs))
-                print(f'{alreadyJoinedAttrs_sorted} -> {joinOrder[i+1]}: [{"".join(sorted(intersection))}]⁺ = {"".join(sorted(intersection_closure))}')
+                nextRelation_sorted = ''.join(sorted(joinOrder[i+1]))
+                print(f'{alreadyJoinedAttrs_sorted} + {nextRelation_sorted} -> {"".join(sorted(alreadyJoinedAttrs | set(joinOrder[i+1])))}: [{"".join(sorted(intersection))}]⁺ = {"".join(sorted(intersection_closure))}')
                 alreadyJoinedAttrs.update(joinOrder[i+1])  # Update with attributes from the next relation
         return True
 
